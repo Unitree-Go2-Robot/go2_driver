@@ -22,17 +22,9 @@ jobs:
         with:
           ros-distro: humble
 
-      - name: Clone additional ROS 2 packages
-        run: |
-          mkdir -p src
-          cd src
-          git clone https://github.com/Unitree-Go2-Robot/unitree_go
-          git clone https://github.com/Unitree-Go2-Robot/unitree_api
-          git clone https://github.com/Unitree-Go2-Robot/go2_interfaces
-        shell: bash
-
       - name: Build ROS 2 package   
         uses: ros-tooling/action-ros-ci@0.3.13
         with:
           package-name: go2_driver unitree_go unitree_api go2_interfaces
+          vcs-repo-file-url: https://raw.githubusercontent.com/Unitree-Go2-Robot/go2_driver/refs/heads/humble-devel/dependencies.repos
           target-ros2-distro: humble
