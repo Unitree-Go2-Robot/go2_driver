@@ -1,0 +1,38 @@
+name: humble
+
+on:
+  push:
+    branches:
+      - humble-devel
+  pull_request:
+    branches:
+      - humble-devel
+  schedule:
+    - cron: "0 7 * * 1"
+
+jobs:
+  ROS2:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ROS 2 environment
+        uses: ros-tooling/setup-ros@0.7.9
+        with:
+          ros-distro: humble
+
+      - name: Clone additional ROS 2 packages
+        run: |
+          mkdir -p src
+          cd src
+          git clone https://github.com/Unitree-Go2-Robot/unitree_go
+          git clone https://github.com/Unitree-Go2-Robot/unitree_api
+          git clone https://github.com/Unitree-Go2-Robot/go2_interfaces
+        shell: bash
+
+      - name: Build ROS 2 package
+        uses: ros-tooling/action-ros-ci@0.3.13
+        with:
+          package-name: go2_driver
+          target-ros2-distro: humble
