@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+target_link_libraries(${PROJECT_NAME} avcodec avformat avutil swscale)
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "go2_driver::Go2Driver")
 
