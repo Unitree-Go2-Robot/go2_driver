@@ -245,28 +245,21 @@ void Go2Driver::front_video_data_callback(const unitree_go::msg::Go2FrontVideoDa
     return;
   }
 
-  SwsContext * sws_ctx = sws_getContext(
-    frame->width, frame->height, AV_PIX_FMT_YUV420P,
-    frame->width, frame->height, AV_PIX_FMT_BGR24,
-    SWS_BICUBIC, NULL, NULL, NULL);
+  cv::Mat yuv420p(frame->height * 3 / 2, frame->width, CV_8UC1);
+  memcpy(yuv420p.data, frame->data[0], frame->linesize[0] * frame->height);
+  memcpy(yuv420p.data + frame->linesize[0] * frame->height, frame->data[1], frame->linesize[1] * frame->height / 2);
+  memcpy(yuv420p.data + frame->linesize[0] * frame->height + frame->linesize[1] * frame->height / 2, frame->data[2], frame->linesize[2] * frame->height / 2);
 
-  int bgr_size = av_image_get_buffer_size(AV_PIX_FMT_BGR24, frame->width, frame->height, 1);
-  std::vector<uint8_t> bgr_data(bgr_size);
+  cv::Mat bgr;
+  cv::cvtColor(yuv420p, bgr, cv::COLOR_YUV420p2RGBy);
 
-  uint8_t * bgr_planes[3] = {bgr_data.data(), NULL, NULL};
-  int bgr_strides[3] = {frame->width * 3, 0, 0};
-  sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, bgr_planes, bgr_strides);
-
-  auto image_msg = std::make_shared<sensor_msgs::msg::Image>();
+  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", bgr).toImageMsg();
   image_msg->header.stamp = this->get_clock()->now();
   image_msg->header.frame_id = "camera_frame";
-  image_msg->height = frame->height;
-  image_msg->width = frame->width;
-  image_msg->encoding = "bgr8";
-  image_msg->step = frame->width * 3;
-  image_msg->data = bgr_data;
 
   image_publisher_->publish(*image_msg);
+
+  av_frame_free(&frame);
 }
 
 void Go2Driver::publish_joint_states(const unitree_go::msg::LowState::SharedPtr msg)

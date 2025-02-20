@@ -16,6 +16,8 @@ find_package(unitree_go REQUIRED)
 find_package(unitree_api REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(go2_interfaces REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(dependencies
   rclcpp
@@ -28,6 +30,8 @@ set(dependencies
   unitree_api
   tf2_ros
   go2_interfaces
+  cv_bridge
+  OpenCV
 )
 
 include_directories(include)

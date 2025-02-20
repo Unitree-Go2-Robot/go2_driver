@@ -48,6 +48,9 @@ extern "C" {
     #include <libswscale/swscale.h>
 }
 
+#include <sensor_msgs/msg/image.hpp>
+#include <cv_bridge/cv_bridge.h>
+
 namespace go2_driver
 {
 
