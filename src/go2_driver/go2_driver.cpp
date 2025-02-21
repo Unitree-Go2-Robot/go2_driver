@@ -1,34 +1,19 @@
-// BSD 3-Clause License
-
-// Copyright (c) 2024, Intelligent Robotics Lab
-// All rights reserved.
-
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-
-// * Redistributions of source code must retain the above copyright notice, this
-//   list of conditions and the following disclaimer.
-
-// * Redistributions in binary form must reproduce the above copyright notice,
-//   this list of conditions and the following disclaimer in the documentation
-//   and/or other materials provided with the distribution.
-
-// * Neither the name of the copyright holder nor the names of its
-//   contributors may be used to endorse or promote products derived from
-//   this software without specific prior written permission.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Copyright 2024 Intelligent Robotics Lab
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <go2_driver/go2_driver.hpp>
+
 
 namespace go2_driver
 {
@@ -36,16 +21,40 @@ namespace go2_driver
 Go2Driver::Go2Driver(
   const rclcpp::NodeOptions & options)
 : Node("go2_driver", options),
-  tf_broadcaster_(this)
+  tf_broadcaster_(this),
+  codec_(),
+  p_codec_context_(),
+  sps_packet_(),
+  pps_packet_()
 {
   rclcpp::QoS qos_profile(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+  declare_parameter("camera_resolution", 720);
+  get_parameter("camera_resolution", camera_resolution_);
+
+  codec_ = avcodec_find_decoder(AV_CODEC_ID_H264);
+  if (!codec_) {
+    RCLCPP_ERROR(get_logger(), "Failed to find codec.");
+    return;
+  }
+  p_codec_context_ = avcodec_alloc_context3(codec_);
+  if (p_codec_context_ == nullptr) {
+    RCLCPP_ERROR(get_logger(), "Failed to allocate codec context.");
+    return;
+  }
+
+  if (avcodec_open2(p_codec_context_, codec_, nullptr) < 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to open codec.");
+    return;
+  }
 
   pointcloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
   joint_state_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos_profile);
   imu_pub_ = create_publisher<unitree_go::msg::IMUState>("imu", 10);
   request_pub_ = create_publisher<unitree_api::msg::Request>("api/sport/request", 10);
+  image_publisher_ = create_publisher<sensor_msgs::msg::Image>("/image_raw", 10);
 
   pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
     "/utlidar/cloud", 10,
@@ -64,6 +73,10 @@ Go2Driver::Go2Driver(
 
   cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
     "cmd_vel", 10, std::bind(&Go2Driver::cmd_vel_callback, this, std::placeholders::_1));
+
+  front_video_sub_ = create_subscription<unitree_go::msg::Go2FrontVideoData>(
+    "frontvideostream", 10,
+    std::bind(&Go2Driver::front_video_data_callback, this, std::placeholders::_1));
 
   set_body_height_service_ =
     this->create_service<go2_interfaces::srv::BodyHeight>(
@@ -171,6 +184,82 @@ void Go2Driver::publish_pose_stamped(const geometry_msgs::msg::PoseStamped::Shar
 void Go2Driver::joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   joy_state_ = *msg;
+}
+
+void Go2Driver::front_video_data_callback(const unitree_go::msg::Go2FrontVideoData::SharedPtr msg)
+{
+  if (msg->resolution != camera_resolution_) {return;}
+  AVPacket * packet = av_packet_alloc();
+
+  av_new_packet(packet, msg->data.size());
+  memcpy(packet->data, msg->data.data(), msg->data.size());
+
+  if (packet->size >= 4 && packet->data[0] == 0x00 && packet->data[1] == 0x00 &&
+    packet->data[2] == 0x00 && packet->data[3] == 0x01)
+  {
+
+    uint8_t nal_unit_type = packet->data[4] & 0x1F;
+
+    if (nal_unit_type == 7) {
+      if (!sps_packet_) {
+        sps_packet_ = av_packet_alloc();
+        av_packet_ref(sps_packet_, packet);
+        RCLCPP_INFO(get_logger(), "SPS received.");
+      }
+    } else if (nal_unit_type == 1) {
+      if (!pps_packet_) {
+        pps_packet_ = av_packet_alloc();
+        av_packet_ref(pps_packet_, packet);
+        RCLCPP_INFO(get_logger(), "PPS received.");
+      }
+    }
+  }
+
+  if (!sps_packet_ || !pps_packet_) {
+    RCLCPP_WARN(get_logger(), "Waiting for SPS/PPS before decoding.");
+    return;
+  }
+
+  if (!sps_sent_) {
+    avcodec_send_packet(p_codec_context_, sps_packet_);
+    avcodec_send_packet(p_codec_context_, pps_packet_);
+    sps_sent_ = true;
+  }
+  int ret = avcodec_send_packet(p_codec_context_, packet);
+  if (ret < 0) {
+    char errbuf[AV_ERROR_MAX_STRING_SIZE];
+    av_strerror(ret, errbuf, sizeof(errbuf));
+    RCLCPP_ERROR(get_logger(), "Failed to send packet to decoder: %s", errbuf);
+  }
+
+  AVFrame * frame = av_frame_alloc();
+  ret = avcodec_receive_frame(p_codec_context_, frame);
+  if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+    av_frame_free(&frame);
+    return;
+  } else if (ret < 0) {
+    char errbuf[AV_ERROR_MAX_STRING_SIZE];
+    av_strerror(ret, errbuf, sizeof(errbuf));
+    RCLCPP_ERROR(get_logger(), "Failed to receive frame from decoder: %s", errbuf);
+    av_frame_free(&frame);
+    return;
+  }
+
+  cv::Mat yuv420p(frame->height * 3 / 2, frame->width, CV_8UC1);
+  memcpy(yuv420p.data, frame->data[0], frame->linesize[0] * frame->height);
+  memcpy(yuv420p.data + frame->linesize[0] * frame->height, frame->data[1], frame->linesize[1] * frame->height / 2);
+  memcpy(yuv420p.data + frame->linesize[0] * frame->height + frame->linesize[1] * frame->height / 2, frame->data[2], frame->linesize[2] * frame->height / 2);
+
+  cv::Mat bgr;
+  cv::cvtColor(yuv420p, bgr, cv::COLOR_YUV420p2RGBy);
+
+  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", bgr).toImageMsg();
+  image_msg->header.stamp = this->get_clock()->now();
+  image_msg->header.frame_id = "camera_frame";
+
+  image_publisher_->publish(*image_msg);
+
+  av_frame_free(&frame);
 }
 
 void Go2Driver::publish_joint_states(const unitree_go::msg::LowState::SharedPtr msg)
