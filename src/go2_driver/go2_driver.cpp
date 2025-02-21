@@ -251,7 +251,7 @@ void Go2Driver::front_video_data_callback(const unitree_go::msg::Go2FrontVideoDa
   memcpy(yuv420p.data + frame->linesize[0] * frame->height + frame->linesize[1] * frame->height / 2, frame->data[2], frame->linesize[2] * frame->height / 2);
 
   cv::Mat bgr;
-  cv::cvtColor(yuv420p, bgr, cv::COLOR_YUV420p2RGBy);
+  cv::cvtColor(yuv420p, bgr, cv::COLOR_YUV420p2RGB);
 
   auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", bgr).toImageMsg();
   image_msg->header.stamp = this->get_clock()->now();
