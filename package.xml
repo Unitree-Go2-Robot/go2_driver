@@ -20,6 +20,9 @@
   <depend>tf2_ros</depend>
   <depend>go2_interfaces</depend>
   <depend>nlohmann-json-dev</depend>
+  <depend>cv_bridge</depend>
+  <depend>OpenCV</depend>
+  <depend>OpenSSL</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
