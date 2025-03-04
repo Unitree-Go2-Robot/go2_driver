@@ -79,8 +79,18 @@ enum class Audio
 
 enum class Vui
 {
+  SetSwitch = 1001,
+  GetSwitch = 1002,
   SetVolume = 1003,
   GetVolume = 1004,
+  SetBrightness = 1005,
+  GetBrightness = 1006,
+};
+
+enum class ObstaclesAvoidance
+{
+  SetSwitch = 1001,
+  GetSwitch = 1002,
 };
 
 }  // namespace go2_driver

@@ -28,6 +28,7 @@ Go2Driver::Go2Driver(
   declare_parameter("use_odometry", true);
   declare_parameter("use_joint_states", true);
   declare_parameter("use_services", true);
+  declare_parameter("use_switch_obstacles_avoidance", true);
 
   get_parameter("use_camera", use_camera_);
   get_parameter("use_tts", use_tts_);
@@ -35,6 +36,7 @@ Go2Driver::Go2Driver(
   get_parameter("use_odometry", use_odometry_);
   get_parameter("use_joint_states", use_joint_states_);
   get_parameter("use_services", use_services_);
+  get_parameter("use_switch_obstacles_avoidance", use_switch_obstacles_avoidance_);
 }
 
 CallbackReturnT Go2Driver::on_configure(const rclcpp_lifecycle::State &)
@@ -69,6 +71,12 @@ CallbackReturnT Go2Driver::on_configure(const rclcpp_lifecycle::State &)
     go2_services_handler_->on_configure();
   }
 
+  if (use_switch_obstacles_avoidance_) {
+    go2_switch_obstacles_avoidance_ = std::make_shared<go2_driver::Go2SwitchObstaclesAvoidance>(
+      shared_from_this());
+    go2_switch_obstacles_avoidance_->on_configure();
+  }
+
   RCLCPP_INFO(get_logger(), "\033[1;32mAll modules configured\033[0m");
 
   return CallbackReturnT::SUCCESS;
@@ -100,6 +108,10 @@ CallbackReturnT Go2Driver::on_activate(const rclcpp_lifecycle::State &)
     go2_services_handler_->on_activate();
   }
 
+  if (use_switch_obstacles_avoidance_) {
+    go2_switch_obstacles_avoidance_->on_activate();
+  }
+
   RCLCPP_INFO(get_logger(), "\033[1;32mAll modules activated\033[0m");
 
   return CallbackReturnT::SUCCESS;
@@ -129,6 +141,10 @@ CallbackReturnT Go2Driver::on_deactivate(const rclcpp_lifecycle::State &)
 
   if (use_services_) {
     go2_services_handler_->on_deactivate();
+  }
+
+  if (use_switch_obstacles_avoidance_) {
+    go2_switch_obstacles_avoidance_->on_deactivate();
   }
 
   RCLCPP_INFO(get_logger(), "\033[1;32mAll modules deactivated\033[0m");
@@ -166,6 +182,11 @@ CallbackReturnT Go2Driver::on_cleanup(const rclcpp_lifecycle::State &)
   if (use_services_) {
     go2_services_handler_->on_cleanup();
     go2_services_handler_.reset();
+  }
+
+  if (use_switch_obstacles_avoidance_) {
+    go2_switch_obstacles_avoidance_->on_cleanup();
+    go2_switch_obstacles_avoidance_.reset();
   }
 
   RCLCPP_INFO(get_logger(), "\033[1;32mAll modules cleaned up\033[0m");

@@ -23,6 +23,7 @@
 #include "go2_driver/modules/go2_vui.hpp"
 #include "go2_driver/modules/go2_odometry.hpp"
 #include "go2_driver/modules/go2_joint_states.hpp"
+#include "go2_driver/modules/go2_switch_obstacles_avoidance.hpp"
 
 
 namespace go2_driver
@@ -48,6 +49,7 @@ private:
   std::shared_ptr<go2_driver::Go2VUI> go2_vui_;
   std::shared_ptr<go2_driver::Go2Odometry> go2_odometry_;
   std::shared_ptr<go2_driver::Go2JointStates> go2_joint_states_;
+  std::shared_ptr<go2_driver::Go2SwitchObstaclesAvoidance> go2_switch_obstacles_avoidance_;
 
   bool use_camera_;
   bool use_tts_;
@@ -55,6 +57,7 @@ private:
   bool use_odometry_;
   bool use_joint_states_;
   bool use_services_;
+  bool use_switch_obstacles_avoidance_;
 };
 
 }  // namespace go2_driver

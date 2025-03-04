@@ -46,6 +46,7 @@ add_library(${PROJECT_NAME} SHARED
   src/go2_driver/modules/go2_vui.cpp
   src/go2_driver/modules/go2_odometry.cpp
   src/go2_driver/modules/go2_joint_states.cpp
+  src/go2_driver/modules/go2_switch_obstacles_avoidance.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})

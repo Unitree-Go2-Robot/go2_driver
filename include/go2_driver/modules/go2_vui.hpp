@@ -89,7 +89,7 @@ private:
   rclcpp::Service<go2_interfaces::srv::SetBrightness>::SharedPtr set_brightness_service_;
   rclcpp::Service<go2_interfaces::srv::SetSwitch>::SharedPtr set_switch_service_;
   rclcpp::Service<go2_interfaces::srv::SetVolume>::SharedPtr set_volume_service_;
-  
+
   rclcpp_lifecycle::LifecyclePublisher<unitree_api::msg::Request>::SharedPtr request_pub_;
 
   std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;

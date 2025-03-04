@@ -27,6 +27,7 @@ def generate_launch_description():
     use_odometry = LaunchConfiguration('use_odometry')
     use_joint_states = LaunchConfiguration('use_joint_states')
     use_services = LaunchConfiguration('use_services')
+    use_switch_obtacles_avoidance = LaunchConfiguration('use_switch_obtacles_avoidance')
 
     declare_camera_cmd = DeclareLaunchArgument(
         'use_camera',
@@ -64,6 +65,12 @@ def generate_launch_description():
         description='Use services'
     )
 
+    declare_obtacles_avoidance_cmd = DeclareLaunchArgument(
+        'use_switch_obtacles_avoidance',
+        default_value='True',
+        description='Use obtacles avoidance'
+    )
+
     composable_nodes = []
 
     composable_node = ComposableNode(
@@ -76,7 +83,8 @@ def generate_launch_description():
                      'use_vui': use_vui,
                      'use_odometry': use_odometry,
                      'use_joint_states': use_joint_states,
-                     'use_services': use_services}],
+                     'use_services': use_services,
+                     'use_switch_obtacles_avoidance': use_switch_obtacles_avoidance}],
     )
 
     composable_nodes.append(composable_node)
@@ -97,6 +105,7 @@ def generate_launch_description():
     ld.add_action(declare_odometry_cmd)
     ld.add_action(declare_joint_states_cmd)
     ld.add_action(declare_services_cmd)
+    ld.add_action(declare_obtacles_avoidance_cmd)
     ld.add_action(container)
 
     return ld
