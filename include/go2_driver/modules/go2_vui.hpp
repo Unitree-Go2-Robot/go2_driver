@@ -23,8 +23,12 @@
 #include "go2_driver/utils/go2_lifecycle_node.hpp"
 #include "go2_driver/utils/go2_api_id.hpp"
 
-#include "go2_interfaces/srv/set_volume.hpp"
+#include "go2_interfaces/srv/get_brightness.hpp"
+#include "go2_interfaces/srv/get_switch.hpp"
 #include "go2_interfaces/srv/get_volume.hpp"
+#include "go2_interfaces/srv/set_brightness.hpp"
+#include "go2_interfaces/srv/set_switch.hpp"
+#include "go2_interfaces/srv/set_volume.hpp"
 
 #include "unitree_api/msg/request.hpp"
 #include "unitree_api/msg/response.hpp"
@@ -49,19 +53,43 @@ public:
   CallbackReturnT on_cleanup() override;
 
 private:
-  void handleSetVolume(
+  void handleGetBrightness(
     const std::shared_ptr<rmw_request_id_t> request_header,
-    const std::shared_ptr<go2_interfaces::srv::SetVolume::Request> request,
-    const std::shared_ptr<go2_interfaces::srv::SetVolume::Response> response);
+    const std::shared_ptr<go2_interfaces::srv::GetBrightness::Request> request,
+    const std::shared_ptr<go2_interfaces::srv::GetBrightness::Response> response);
+
+  void handleGetSwitch(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<go2_interfaces::srv::GetSwitch::Request> request,
+    const std::shared_ptr<go2_interfaces::srv::GetSwitch::Response> response);
 
   void handleGetVolume(
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<go2_interfaces::srv::GetVolume::Request> request,
     const std::shared_ptr<go2_interfaces::srv::GetVolume::Response> response);
 
-  rclcpp::Service<go2_interfaces::srv::SetVolume>::SharedPtr set_volume_service_;
-  rclcpp::Service<go2_interfaces::srv::GetVolume>::SharedPtr get_volume_service_;
+  void handleSetBrightness(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<go2_interfaces::srv::SetBrightness::Request> request,
+    const std::shared_ptr<go2_interfaces::srv::SetBrightness::Response> response);
 
+  void handleSetSwitch(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<go2_interfaces::srv::SetSwitch::Request> request,
+    const std::shared_ptr<go2_interfaces::srv::SetSwitch::Response> response);
+
+  void handleSetVolume(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<go2_interfaces::srv::SetVolume::Request> request,
+    const std::shared_ptr<go2_interfaces::srv::SetVolume::Response> response);
+
+  rclcpp::Service<go2_interfaces::srv::GetBrightness>::SharedPtr get_brightness_service_;
+  rclcpp::Service<go2_interfaces::srv::GetSwitch>::SharedPtr get_switch_service_;
+  rclcpp::Service<go2_interfaces::srv::GetVolume>::SharedPtr get_volume_service_;
+  rclcpp::Service<go2_interfaces::srv::SetBrightness>::SharedPtr set_brightness_service_;
+  rclcpp::Service<go2_interfaces::srv::SetSwitch>::SharedPtr set_switch_service_;
+  rclcpp::Service<go2_interfaces::srv::SetVolume>::SharedPtr set_volume_service_;
+  
   rclcpp_lifecycle::LifecyclePublisher<unitree_api::msg::Request>::SharedPtr request_pub_;
 
   std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
