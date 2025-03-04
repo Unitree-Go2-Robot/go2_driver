@@ -56,6 +56,31 @@ enum class Mode
   GetState = 1034,
   EconomicGait = 1035,
   FingerHeart = 1036,
+  Dance3 = 1037,
+  Dance4 = 1038,
+  HopSpinLeft = 1039,
+  HopSpinRight = 1040,
+  LeftFlip = 1042,
+  BackFlip = 1044,
+  FreeWalk = 1045,
+  FreeBound = 1046,
+  FreeJump = 1047,
+  FreeAvoid = 1048,
+  WalkStair = 1049,
+  WalkUpRight = 1050,
+  CrossStep = 1051,
+};
+
+enum class Audio
+{
+  StartAudio = 4001,
+  TTS = 4003,
+};
+
+enum class Vui
+{
+  SetVolume = 1003,
+  GetVolume = 1004,
 };
 
 }  // namespace go2_driver

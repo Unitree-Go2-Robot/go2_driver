@@ -54,6 +54,6 @@ def generate_launch_description():
 
     ld = LaunchDescription()
     ld.add_action(container)
-    ld.add_action(pointclod_to_laserscan_cmd)
+    # ld.add_action(pointclod_to_laserscan_cmd)
 
     return ld

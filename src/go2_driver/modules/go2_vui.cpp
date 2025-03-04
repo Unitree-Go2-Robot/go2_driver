@@ -1,0 +1,141 @@
+// Copyright 2025 Intelligent Robotics Lab
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+#include <go2_driver/modules/go2_vui.hpp>
+
+
+namespace go2_driver
+{
+
+Go2VUI::Go2VUI(const std::shared_ptr<rclcpp_lifecycle::LifecycleNode> & node)
+: node_(node)
+{
+}
+
+CallbackReturnT Go2VUI::on_configure()
+{
+  set_volume_service_ =
+    node_->create_service<go2_interfaces::srv::SetVolume>(
+    "set_volume",
+    std::bind(
+      &Go2VUI::handleSetVolume, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+  get_volume_service_ =
+    node_->create_service<go2_interfaces::srv::GetVolume>(
+    "get_volume",
+    std::bind(
+      &Go2VUI::handleGetVolume, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+  request_pub_ = node_->create_publisher<unitree_api::msg::Request>("api/vui/request", 10);
+
+  return CallbackReturnT::SUCCESS;
+}
+
+CallbackReturnT Go2VUI::on_activate()
+{
+  request_pub_->on_activate();
+
+  return CallbackReturnT::SUCCESS;
+}
+
+CallbackReturnT Go2VUI::on_deactivate()
+{
+  request_pub_->on_deactivate();
+
+  return CallbackReturnT::SUCCESS;
+}
+
+CallbackReturnT Go2VUI::on_cleanup()
+{
+  return CallbackReturnT::SUCCESS;
+}
+
+void Go2VUI::handleSetVolume(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<go2_interfaces::srv::SetVolume::Request> request,
+  const std::shared_ptr<go2_interfaces::srv::SetVolume::Response> response)
+{
+  (void)request_header;
+
+  if (request->volume < 0 || request->volume > 10) {
+    response->success = false;
+    response->message = "Volume value is out of range [0 ~ 10]";
+    return;
+  }
+
+  nlohmann::json js;
+  js["volume"] = request->volume;
+
+  unitree_api::msg::Request req;
+  req.parameter = js.dump();
+  req.header.identity.api_id = static_cast<int>(go2_driver::Vui::SetVolume);
+
+  request_pub_->publish(req);
+  response->success = true;
+}
+
+void Go2VUI::handleGetVolume(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<go2_interfaces::srv::GetVolume::Request> request,
+  const std::shared_ptr<go2_interfaces::srv::GetVolume::Response> response)
+{
+  (void)request_header;
+  (void)request;
+
+  nlohmann::json js;
+  unitree_api::msg::Request req;
+  req.parameter = js.dump();
+  req.header.identity.api_id = static_cast<int>(go2_driver::Vui::GetVolume);
+
+  rclcpp::executors::SingleThreadedExecutor executor;
+  rclcpp::CallbackGroup::SharedPtr callback_group = node_->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::SubscriptionOptions sub_options;
+  sub_options.callback_group = callback_group;
+
+  executor.add_callback_group(callback_group, node_->get_node_base_interface());
+
+  unitree_api::msg::Response::SharedPtr response_msg;
+
+  auto response_sub_ = node_->create_subscription<unitree_api::msg::Response>(
+    "/api/vui/response", 10,
+    [this, &response_msg](const unitree_api::msg::Response::SharedPtr msg) {
+      if (msg->header.identity.api_id == static_cast<int>(go2_driver::Vui::GetVolume)) {
+        response_msg = msg;
+      }
+    }, sub_options);
+
+  request_pub_->publish(req);
+
+  while (response_msg == nullptr) {
+    executor.spin_some();
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  if (response_msg->header.status.code != 0) {
+    response->success = false;
+    response->message = "Failed to get volume";
+    return;
+  }
+
+  auto data = js.parse(response_msg->data);
+  response->volume = data["data"];
+  response->success = true;
+  response->message = "Get volume successfully";
+}
+
+}  // namespace go2_driver

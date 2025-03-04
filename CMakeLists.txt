@@ -18,6 +18,7 @@ find_package(tf2_ros REQUIRED)
 find_package(go2_interfaces REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(dependencies
   rclcpp
@@ -32,16 +33,23 @@ set(dependencies
   go2_interfaces
   cv_bridge
   OpenCV
+  OpenSSL
 )
 
 include_directories(include)
 
 add_library(${PROJECT_NAME} SHARED
   src/go2_driver/go2_driver.cpp
+  src/go2_driver/modules/go2_camera.cpp
+  src/go2_driver/modules/go2_handle_services.cpp
+  src/go2_driver/modules/go2_tts.cpp
+  src/go2_driver/modules/go2_vui.cpp
+  src/go2_driver/modules/go2_odometry.cpp
+  src/go2_driver/modules/go2_joint_states.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
-target_link_libraries(${PROJECT_NAME} avcodec avformat avutil swscale)
+target_link_libraries(${PROJECT_NAME} avcodec avformat avutil swscale OpenSSL::SSL OpenSSL::Crypto)
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "go2_driver::Go2Driver")
 
