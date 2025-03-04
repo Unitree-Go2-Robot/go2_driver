@@ -48,6 +48,13 @@ private:
   std::shared_ptr<go2_driver::Go2VUI> go2_vui_;
   std::shared_ptr<go2_driver::Go2Odometry> go2_odometry_;
   std::shared_ptr<go2_driver::Go2JointStates> go2_joint_states_;
+
+  bool use_camera_;
+  bool use_tts_;
+  bool use_vui_;
+  bool use_odometry_;
+  bool use_joint_states_;
+  bool use_services_;
 };
 
 }  // namespace go2_driver

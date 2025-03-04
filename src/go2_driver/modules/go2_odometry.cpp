@@ -32,9 +32,7 @@ CallbackReturnT Go2Odometry::on_configure()
 
   odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("odom", qos_profile);
 
-  odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-    "/utlidar/robot_odom", 10,
-    std::bind(&Go2Odometry::publish_odometry, this, std::placeholders::_1));
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mOdometry module configured.\033[0m");
 
   return CallbackReturnT::SUCCESS;
 }
@@ -43,6 +41,12 @@ CallbackReturnT Go2Odometry::on_activate()
 {
   odom_pub_->on_activate();
 
+  odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
+    "/utlidar/robot_odom", 10,
+    std::bind(&Go2Odometry::publish_odometry, this, std::placeholders::_1));
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mOdometry module activated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -50,11 +54,19 @@ CallbackReturnT Go2Odometry::on_deactivate()
 {
   odom_pub_->on_deactivate();
 
+  odom_sub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mOdometry module deactivated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
 CallbackReturnT Go2Odometry::on_cleanup()
 {
+  odom_pub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mOdometry module cleaned up.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 

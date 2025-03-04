@@ -26,6 +26,17 @@ Go2VUI::Go2VUI(const std::shared_ptr<rclcpp_lifecycle::LifecycleNode> & node)
 
 CallbackReturnT Go2VUI::on_configure()
 {
+  request_pub_ = node_->create_publisher<unitree_api::msg::Request>("api/vui/request", 10);
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mVUI module configured.\033[0m");
+
+  return CallbackReturnT::SUCCESS;
+}
+
+CallbackReturnT Go2VUI::on_activate()
+{
+  request_pub_->on_activate();
+
   set_volume_service_ =
     node_->create_service<go2_interfaces::srv::SetVolume>(
     "set_volume",
@@ -40,14 +51,7 @@ CallbackReturnT Go2VUI::on_configure()
       &Go2VUI::handleGetVolume, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-  request_pub_ = node_->create_publisher<unitree_api::msg::Request>("api/vui/request", 10);
-
-  return CallbackReturnT::SUCCESS;
-}
-
-CallbackReturnT Go2VUI::on_activate()
-{
-  request_pub_->on_activate();
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mVUI module activated.\033[0m");
 
   return CallbackReturnT::SUCCESS;
 }
@@ -56,11 +60,20 @@ CallbackReturnT Go2VUI::on_deactivate()
 {
   request_pub_->on_deactivate();
 
+  set_volume_service_.reset();
+  get_volume_service_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mVUI module deactivated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
 CallbackReturnT Go2VUI::on_cleanup()
 {
+  request_pub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mVUI module cleaned up.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 

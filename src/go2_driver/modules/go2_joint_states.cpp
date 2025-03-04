@@ -28,9 +28,7 @@ CallbackReturnT Go2JointStates::on_configure()
 {
   joint_state_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
 
-  low_state_sub_ = node_->create_subscription<unitree_go::msg::LowState>(
-    "lowstate", 10,
-    std::bind(&Go2JointStates::publish_joint_states, this, std::placeholders::_1));
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mJoint states module configured.\033[0m");
 
   return CallbackReturnT::SUCCESS;
 }
@@ -39,6 +37,12 @@ CallbackReturnT Go2JointStates::on_activate()
 {
   joint_state_pub_->on_activate();
 
+  low_state_sub_ = node_->create_subscription<unitree_go::msg::LowState>(
+    "lowstate", 10,
+    std::bind(&Go2JointStates::publish_joint_states, this, std::placeholders::_1));
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mJoint states module activated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -46,11 +50,19 @@ CallbackReturnT Go2JointStates::on_deactivate()
 {
   joint_state_pub_->on_deactivate();
 
+  low_state_sub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mJoint states module deactivated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
 CallbackReturnT Go2JointStates::on_cleanup()
 {
+  joint_state_pub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mJoint states module cleaned up.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 

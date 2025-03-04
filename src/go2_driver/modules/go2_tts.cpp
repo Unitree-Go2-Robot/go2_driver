@@ -27,6 +27,8 @@ CallbackReturnT Go2TTS::on_configure()
 {
   say_request_pub_ = node_->create_publisher<unitree_api::msg::Request>("api/audiohub/request", 10);
 
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mTTS module configured.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -41,6 +43,8 @@ CallbackReturnT Go2TTS::on_activate()
       &Go2TTS::handleSay, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mTTS module activated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -48,11 +52,17 @@ CallbackReturnT Go2TTS::on_deactivate()
 {
   say_request_pub_->on_deactivate();
 
+  say_service_.reset();
+
   return CallbackReturnT::SUCCESS;
 }
 
 CallbackReturnT Go2TTS::on_cleanup()
 {
+  say_request_pub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mTTS module cleaned up.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -80,7 +90,6 @@ void Go2TTS::handleSay(
 
   unitree_api::msg::Request start_req;
   start_req.header.identity.api_id = static_cast<int>(go2_driver::Audio::StartAudio);
-
 
   // We waited a while for the open to be published
   say_request_pub_->publish(start_req);

@@ -51,6 +51,8 @@ CallbackReturnT Go2Camera::on_configure()
 
   image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("/image_raw", 10);
 
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module configured.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -62,6 +64,8 @@ CallbackReturnT Go2Camera::on_activate()
     "frontvideostream", 10,
     std::bind(&Go2Camera::front_video_data_callback, this, std::placeholders::_1));
 
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module activated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -69,11 +73,21 @@ CallbackReturnT Go2Camera::on_deactivate()
 {
   image_publisher_->on_deactivate();
 
+  front_video_sub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module deactivated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
 CallbackReturnT Go2Camera::on_cleanup()
 {
+  image_publisher_.reset();
+
+  avcodec_free_context(&p_codec_context_);
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module cleaned up.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 

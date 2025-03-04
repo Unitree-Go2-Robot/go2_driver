@@ -13,11 +13,56 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
+
+    use_camera = LaunchConfiguration('use_camera')
+    use_tts = LaunchConfiguration('use_tts')
+    use_vui = LaunchConfiguration('use_vui')
+    use_odometry = LaunchConfiguration('use_odometry')
+    use_joint_states = LaunchConfiguration('use_joint_states')
+    use_services = LaunchConfiguration('use_services')
+
+    declare_camera_cmd = DeclareLaunchArgument(
+        'use_camera',
+        default_value='True',
+        description='Use camera'
+    )
+
+    declare_tts_cmd = DeclareLaunchArgument(
+        'use_tts',
+        default_value='True',
+        description='Use text to speech'
+    )
+
+    declare_vui_cmd = DeclareLaunchArgument(
+        'use_vui',
+        default_value='True',
+        description='Use voice user interface'
+    )
+
+    declare_odometry_cmd = DeclareLaunchArgument(
+        'use_odometry',
+        default_value='True',
+        description='Use odometry'
+    )
+
+    declare_joint_states_cmd = DeclareLaunchArgument(
+        'use_joint_states',
+        default_value='True',
+        description='Use joint states'
+    )
+
+    declare_services_cmd = DeclareLaunchArgument(
+        'use_services',
+        default_value='True',
+        description='Use services'
+    )
 
     composable_nodes = []
 
@@ -26,8 +71,15 @@ def generate_launch_description():
         plugin='go2_driver::Go2Driver',
         name='go2_driver',
         namespace='',
-
+        parameters=[{'use_camera': use_camera,
+                     'use_tts': use_tts,
+                     'use_vui': use_vui,
+                     'use_odometry': use_odometry,
+                     'use_joint_states': use_joint_states,
+                     'use_services': use_services,
+                    }],
     )
+
     composable_nodes.append(composable_node)
 
     container = ComposableNodeContainer(
@@ -39,21 +91,13 @@ def generate_launch_description():
         output='screen',
     )
 
-    pointclod_to_laserscan_cmd = Node(
-        package='pointcloud_to_laserscan',
-        executable='pointcloud_to_laserscan_node',
-        name='pointcloud_to_laserscan',
-        namespace='',
-        output='screen',
-        remappings=[('/cloud_in', '/pointcloud')],
-        parameters=[{
-                'target_frame': 'radar',
-                'transform_tolerance': 0.01,
-            }],
-    )
-
     ld = LaunchDescription()
+    ld.add_action(declare_camera_cmd)
+    ld.add_action(declare_tts_cmd)
+    ld.add_action(declare_vui_cmd)
+    ld.add_action(declare_odometry_cmd)
+    ld.add_action(declare_joint_states_cmd)
+    ld.add_action(declare_services_cmd)
     ld.add_action(container)
-    # ld.add_action(pointclod_to_laserscan_cmd)
 
     return ld

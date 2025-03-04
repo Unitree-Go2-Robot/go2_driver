@@ -28,8 +28,7 @@ CallbackReturnT Go2HandleServices::on_configure()
 {
   request_pub_ = node_->create_publisher<unitree_api::msg::Request>("api/sport/request", 10);
 
-  cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
-    "cmd_vel", 10, std::bind(&Go2HandleServices::cmd_vel_callback, this, std::placeholders::_1));
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mHandle services module configured.\033[0m");
 
   return CallbackReturnT::SUCCESS;
 }
@@ -37,6 +36,9 @@ CallbackReturnT Go2HandleServices::on_configure()
 CallbackReturnT Go2HandleServices::on_activate()
 {
   request_pub_->on_activate();
+
+  cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
+    "cmd_vel", 10, std::bind(&Go2HandleServices::cmd_vel_callback, this, std::placeholders::_1));
 
   set_body_height_service_ =
     node_->create_service<go2_interfaces::srv::BodyHeight>(
@@ -129,6 +131,8 @@ CallbackReturnT Go2HandleServices::on_activate()
       &Go2HandleServices::handleGetState, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mHandle services module activated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
@@ -136,11 +140,32 @@ CallbackReturnT Go2HandleServices::on_deactivate()
 {
   request_pub_->on_deactivate();
 
+  cmd_vel_sub_.reset();
+  set_body_height_service_.reset();
+  set_continuous_gait_service_.reset();
+  set_euler_service_.reset();
+  set_foot_raise_height_service_.reset();
+  set_mode_service_.reset();
+  set_pose_service_.reset();
+  set_speed_level_service_.reset();
+  set_switch_gait_service_.reset();
+  set_switch_joystick_service_.reset();
+  get_body_height_service_.reset();
+  get_foot_raise_height_service_.reset();
+  get_speed_level_service_.reset();
+  get_state_service_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mHandle services module deactivated.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
 CallbackReturnT Go2HandleServices::on_cleanup()
 {
+  request_pub_.reset();
+
+  RCLCPP_INFO(node_->get_logger(), "\033[1;34mHandle services module cleaned up.\033[0m");
+
   return CallbackReturnT::SUCCESS;
 }
 
