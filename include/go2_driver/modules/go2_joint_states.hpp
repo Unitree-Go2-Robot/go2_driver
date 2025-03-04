@@ -19,12 +19,17 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
+
+#include <sensor_msgs/msg/joint_state.hpp>
+
+#include "unitree_go/msg/low_state.hpp"
+#include "unitree_api/msg/request.hpp"
+
 #include "go2_driver/utils/go2_lifecycle_node.hpp"
 #include "go2_driver/utils/go2_api_id.hpp"
-#include "unitree_api/msg/request.hpp"
+
 #include "nlohmann/json.hpp"
-#include "unitree_go/msg/low_state.hpp"
-#include <sensor_msgs/msg/joint_state.hpp>
+
 
 namespace go2_driver
 {

@@ -19,10 +19,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
-#include "go2_driver/utils/go2_lifecycle_node.hpp"
+
 #include <sensor_msgs/msg/image.hpp>
 #include <unitree_go/msg/go2_front_video_data.hpp>
 #include <cv_bridge/cv_bridge.h>
+
+#include "go2_driver/utils/go2_lifecycle_node.hpp"
 
 extern "C" {
     #include <libavcodec/avcodec.h>
@@ -30,6 +32,7 @@ extern "C" {
     #include <libavutil/imgutils.h>
     #include <libswscale/swscale.h>
 }
+
 
 namespace go2_driver
 {

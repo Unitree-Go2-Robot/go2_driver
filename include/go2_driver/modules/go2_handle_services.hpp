@@ -19,7 +19,11 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
+
+#include <geometry_msgs/msg/twist.hpp>
+
 #include "go2_driver/utils/go2_lifecycle_node.hpp"
+
 #include "go2_interfaces/srv/body_height.hpp"
 #include "go2_interfaces/srv/continuous_gait.hpp"
 #include "go2_interfaces/srv/euler.hpp"
@@ -33,10 +37,12 @@
 #include "go2_interfaces/srv/get_foot_raise_height.hpp"
 #include "go2_interfaces/srv/get_speed_level.hpp"
 #include "go2_interfaces/srv/get_state.hpp"
-#include "geometry_msgs/msg/twist.hpp"
+
 #include "unitree_api/msg/request.hpp"
 #include "unitree_api/msg/response.hpp"
+
 #include "go2_driver/utils/go2_api_id.hpp"
+
 #include "nlohmann/json.hpp"
 
 

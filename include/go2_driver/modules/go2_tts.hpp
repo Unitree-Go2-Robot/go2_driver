@@ -19,17 +19,22 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
+
+#include <vector>
+#include <fstream>
+#include <cstdlib>
+
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
+
 #include "go2_driver/utils/go2_lifecycle_node.hpp"
 #include "go2_driver/utils/go2_api_id.hpp"
 #include "unitree_api/msg/request.hpp"
 #include "go2_interfaces/srv/say.hpp"
+
 #include "nlohmann/json.hpp"
-#include <vector>
-#include <fstream>
-#include <cstdlib>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/buffer.h>
+
 
 namespace go2_driver
 {

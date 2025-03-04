@@ -13,10 +13,10 @@
 # limitations under the License.
 
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.actions import DeclareLaunchArgument, ExecuteProcess
-from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
@@ -76,8 +76,7 @@ def generate_launch_description():
                      'use_vui': use_vui,
                      'use_odometry': use_odometry,
                      'use_joint_states': use_joint_states,
-                     'use_services': use_services,
-                    }],
+                     'use_services': use_services}],
     )
 
     composable_nodes.append(composable_node)
