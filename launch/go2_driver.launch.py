@@ -13,21 +13,46 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import (
+     DeclareLaunchArgument, ExecuteProcess,
+     RegisterEventHandler, OpaqueFunction
+)
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch.event_handlers import OnProcessExit, OnProcessStart
+from launch.substitutions import FindExecutable
+
+
+def autostart(context):
+
+    if (LaunchConfiguration('autostart').perform(context) == 'True' or
+            LaunchConfiguration('autostart').perform(context) == 'true'):
+        configure_event = ExecuteProcess(
+            cmd=[[FindExecutable(
+                name='ros2'), ' lifecycle', ' set', ' /go2_driver', ' configure']],
+            shell=True
+        )
+
+        activate_event = ExecuteProcess(
+            cmd=[[FindExecutable(
+                name='ros2'), ' lifecycle', ' set', ' /go2_driver', ' activate']],
+            shell=True
+        )
+
+        event_handler = RegisterEventHandler(
+            OnProcessExit(
+                target_action=configure_event,
+                on_exit=[activate_event],
+            )
+        )
+
+        return [configure_event, event_handler]
+
+    return []
 
 
 def generate_launch_description():
-
-    use_camera = LaunchConfiguration('use_camera')
-    use_tts = LaunchConfiguration('use_tts')
-    use_vui = LaunchConfiguration('use_vui')
-    use_odometry = LaunchConfiguration('use_odometry')
-    use_joint_states = LaunchConfiguration('use_joint_states')
-    use_services = LaunchConfiguration('use_services')
-    use_switch_obtacles_avoidance = LaunchConfiguration('use_switch_obtacles_avoidance')
 
     declare_camera_cmd = DeclareLaunchArgument(
         'use_camera',
@@ -71,6 +96,12 @@ def generate_launch_description():
         description='Use obtacles avoidance'
     )
 
+    declare_autostart_cmd = DeclareLaunchArgument(
+        'autostart',
+        default_value='True',
+        description='Automatically start the components'
+    )
+
     composable_nodes = []
 
     composable_node = ComposableNode(
@@ -78,13 +109,15 @@ def generate_launch_description():
         plugin='go2_driver::Go2Driver',
         name='go2_driver',
         namespace='',
-        parameters=[{'use_camera': use_camera,
-                     'use_tts': use_tts,
-                     'use_vui': use_vui,
-                     'use_odometry': use_odometry,
-                     'use_joint_states': use_joint_states,
-                     'use_services': use_services,
-                     'use_switch_obtacles_avoidance': use_switch_obtacles_avoidance}],
+        parameters=[{
+            'use_camera': LaunchConfiguration('use_camera'),
+            'use_tts': LaunchConfiguration('use_tts'),
+            'use_vui': LaunchConfiguration('use_vui'),
+            'use_odometry': LaunchConfiguration('use_odometry'),
+            'use_joint_states': LaunchConfiguration('use_joint_states'),
+            'use_services': LaunchConfiguration('use_services'),
+            'use_switch_obtacles_avoidance': LaunchConfiguration('use_switch_obtacles_avoidance'),
+        }],
     )
 
     composable_nodes.append(composable_node)
@@ -98,6 +131,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    event_handler = RegisterEventHandler(
+            OnProcessStart(
+                target_action=container,
+                on_start=[OpaqueFunction(function=autostart)],
+            )
+        )
+
     ld = LaunchDescription()
     ld.add_action(declare_camera_cmd)
     ld.add_action(declare_tts_cmd)
@@ -106,6 +146,8 @@ def generate_launch_description():
     ld.add_action(declare_joint_states_cmd)
     ld.add_action(declare_services_cmd)
     ld.add_action(declare_obtacles_avoidance_cmd)
+    ld.add_action(declare_autostart_cmd)
     ld.add_action(container)
+    ld.add_action(event_handler)
 
     return ld
