@@ -14,14 +14,15 @@
 
 from launch import LaunchDescription
 from launch.actions import (
-     DeclareLaunchArgument, ExecuteProcess,
-     RegisterEventHandler, OpaqueFunction
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    OpaqueFunction,
+    RegisterEventHandler,
 )
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, FindExecutable
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.event_handlers import OnProcessExit, OnProcessStart
-from launch.substitutions import FindExecutable
 
 
 def autostart(context):
