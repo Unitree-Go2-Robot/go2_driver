@@ -21,8 +21,11 @@
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
 
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <sensor_msgs/msg/region_of_interest.hpp>
 #include <unitree_go/msg/go2_front_video_data.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
 
 #include "go2_driver/utils/go2_lifecycle_node.hpp"
 
@@ -52,9 +55,11 @@ public:
 
 private:
   void front_video_data_callback(const unitree_go::msg::Go2FrontVideoData::SharedPtr msg);
+  void publishCameraInfo();
 
   rclcpp::Subscription<unitree_go::msg::Go2FrontVideoData>::SharedPtr front_video_sub_;
   rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
 
   std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
 
@@ -64,6 +69,22 @@ private:
   AVPacket * pps_packet_;
   bool sps_sent_{false};
   int camera_resolution_;
+
+  std::string frame_id_;
+  std::string distorsion_model_;
+  int height_;
+  int width_;
+  std::vector<double> d_;
+  std::vector<double> k_;
+  std::vector<double> r_;
+  std::vector<double> p_;
+  int binning_x_;
+  int binning_y_;
+  int roi_x_offset_;
+  int roi_y_offset_;
+  int roi_height_;
+  int roi_width_;
+  bool roi_do_rectify_;
 };
 
 }  // namespace go2_driver

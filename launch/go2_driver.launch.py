@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -54,6 +57,12 @@ def autostart(context):
 
 
 def generate_launch_description():
+
+    camera_calibration_file = os.path.join(
+        get_package_share_directory('go2_driver'),
+        'config',
+        'camera_calibration.yaml'
+    )
 
     declare_camera_cmd = DeclareLaunchArgument(
         'use_camera',
@@ -110,7 +119,7 @@ def generate_launch_description():
         plugin='go2_driver::Go2Driver',
         name='go2_driver',
         namespace='',
-        parameters=[{
+        parameters=[camera_calibration_file, {
             'use_camera': LaunchConfiguration('use_camera'),
             'use_tts': LaunchConfiguration('use_tts'),
             'use_vui': LaunchConfiguration('use_vui'),

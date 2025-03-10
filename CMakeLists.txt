@@ -50,7 +50,7 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
-target_link_libraries(${PROJECT_NAME} avcodec avformat avutil swscale OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(${PROJECT_NAME} avcodec avformat avutil swscale OpenSSL::SSL OpenSSL::Crypto ${OpenCV_LIBS})
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "go2_driver::Go2Driver")
 
@@ -67,7 +67,7 @@ install(DIRECTORY include/
   DESTINATION include
 )
 
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
 

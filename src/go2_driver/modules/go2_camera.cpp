@@ -15,7 +15,6 @@
 
 #include <go2_driver/modules/go2_camera.hpp>
 
-
 namespace go2_driver
 {
 
@@ -27,7 +26,38 @@ Go2Camera::Go2Camera(const std::shared_ptr<rclcpp_lifecycle::LifecycleNode> & no
   pps_packet_()
 {
   node_->declare_parameter("camera_resolution", 720);
+  node_->declare_parameter("frame_id", "camera_frame");
+  node_->declare_parameter("height", 720);
+  node_->declare_parameter("width", 1280);
+  node_->declare_parameter("distorsion_model", "plumb_bob");
+  node_->declare_parameter("d", std::vector<double>());
+  node_->declare_parameter("k", std::vector<double>());
+  node_->declare_parameter("r", std::vector<double>());
+  node_->declare_parameter("p", std::vector<double>());
+  node_->declare_parameter("binning_x", 0);
+  node_->declare_parameter("binning_y", 0);
+  node_->declare_parameter("roi.x_offset", 0);
+  node_->declare_parameter("roi.y_offset", 0);
+  node_->declare_parameter("roi.height", 0);
+  node_->declare_parameter("roi.width", 0);
+  node_->declare_parameter("roi.do_rectify", false);
+
   node_->get_parameter("camera_resolution", camera_resolution_);
+  node_->get_parameter("frame_id", frame_id_);
+  node_->get_parameter("height", height_);
+  node_->get_parameter("width", width_);
+  node_->get_parameter("distorsion_model", distorsion_model_);
+  node_->get_parameter("d", d_);
+  node_->get_parameter("k", k_);
+  node_->get_parameter("r", r_);
+  node_->get_parameter("p", p_);
+  node_->get_parameter("binning_x", binning_x_);
+  node_->get_parameter("binning_y", binning_y_);
+  node_->get_parameter("roi.x_offset", roi_x_offset_);
+  node_->get_parameter("roi.y_offset", roi_y_offset_);
+  node_->get_parameter("roi.height", roi_height_);
+  node_->get_parameter("roi.width", roi_width_);
+  node_->get_parameter("roi.do_rectify", roi_do_rectify_);
 }
 
 CallbackReturnT Go2Camera::on_configure()
@@ -50,6 +80,7 @@ CallbackReturnT Go2Camera::on_configure()
   }
 
   image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("/image_raw", 10);
+  camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>("/camera_info", 10);
 
   RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module configured.\033[0m");
 
@@ -59,6 +90,7 @@ CallbackReturnT Go2Camera::on_configure()
 CallbackReturnT Go2Camera::on_activate()
 {
   image_publisher_->on_activate();
+  camera_info_publisher_->on_activate();
 
   front_video_sub_ = node_->create_subscription<unitree_go::msg::Go2FrontVideoData>(
     "frontvideostream", 10,
@@ -72,6 +104,7 @@ CallbackReturnT Go2Camera::on_activate()
 CallbackReturnT Go2Camera::on_deactivate()
 {
   image_publisher_->on_deactivate();
+  camera_info_publisher_->on_deactivate();
 
   front_video_sub_.reset();
 
@@ -83,6 +116,7 @@ CallbackReturnT Go2Camera::on_deactivate()
 CallbackReturnT Go2Camera::on_cleanup()
 {
   image_publisher_.reset();
+  camera_info_publisher_.reset();
 
   avcodec_free_context(&p_codec_context_);
 
@@ -165,13 +199,46 @@ void Go2Camera::front_video_data_callback(const unitree_go::msg::Go2FrontVideoDa
   cv::Mat bgr;
   cv::cvtColor(yuv420p, bgr, cv::COLOR_YUV420p2RGB);
 
-  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", bgr).toImageMsg();
+  cv::Mat K = cv::Mat(3, 3, CV_64F, k_.data());
+  cv::Mat D = cv::Mat(1, d_.size(), CV_64F, d_.data());
+  cv::Mat dst;
+
+  cv::undistort(bgr, dst, K, D);
+
+  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", dst).toImageMsg();
   image_msg->header.stamp = node_->get_clock()->now();
   image_msg->header.frame_id = "camera_frame";
 
   image_publisher_->publish(*image_msg);
 
+  if (camera_info_publisher_->get_subscription_count() > 0) {
+    publishCameraInfo();
+  }
+
   av_frame_free(&frame);
+}
+
+void Go2Camera::publishCameraInfo()
+{
+  sensor_msgs::msg::CameraInfo camera_info_msg;
+  camera_info_msg.header.stamp = node_->get_clock()->now();
+  camera_info_msg.header.frame_id = frame_id_;
+  camera_info_msg.height = height_;
+  camera_info_msg.width = width_;
+  camera_info_msg.distortion_model = distorsion_model_;
+  camera_info_msg.d = std::vector<double>(d_.begin(), d_.end());
+  std::copy(k_.begin(), k_.end(), camera_info_msg.k.begin());
+  std::copy(r_.begin(), r_.end(), camera_info_msg.r.begin());
+  std::copy(p_.begin(), p_.end(), camera_info_msg.p.begin());
+  camera_info_msg.binning_x = binning_x_;
+  camera_info_msg.binning_y = binning_y_;
+  camera_info_msg.roi.x_offset = roi_x_offset_;
+  camera_info_msg.roi.y_offset = roi_y_offset_;
+  camera_info_msg.roi.height = roi_height_;
+  camera_info_msg.roi.width = roi_width_;
+  camera_info_msg.roi.do_rectify = roi_do_rectify_;
+
+  camera_info_publisher_->publish(camera_info_msg);
 }
 
 }  // namespace go2_driver
