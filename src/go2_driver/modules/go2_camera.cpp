@@ -80,7 +80,8 @@ CallbackReturnT Go2Camera::on_configure()
   }
 
   image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("/image_raw", 10);
-  camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>("/camera_info", 10);
+  camera_info_publisher_ =
+    node_->create_publisher<sensor_msgs::msg::CameraInfo>("/camera_info", 10);
 
   RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module configured.\033[0m");
 

@@ -59,7 +59,8 @@ private:
 
   rclcpp::Subscription<unitree_go::msg::Go2FrontVideoData>::SharedPtr front_video_sub_;
   rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
-  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::CameraInfo>::SharedPtr
+    camera_info_publisher_;
 
   std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
 
