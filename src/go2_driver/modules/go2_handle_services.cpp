@@ -205,6 +205,7 @@ void Go2HandleServices::handleBodyHeight(
 
   request_pub_->publish(req);
   response->success = true;
+  response->message = "Body height changed";
 }
 
 void Go2HandleServices::handleContinuousGait(
