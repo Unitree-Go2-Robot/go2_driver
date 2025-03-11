@@ -192,7 +192,7 @@ void Go2HandleServices::handleBodyHeight(
 
   if (request->height < -0.18 || request->height > 0.03) {
     response->success = false;
-    response->message = "Height value is out of range [0.3 ~ 0.5]";
+    response->message = "Height value is out of range [-0.18 ~ 0.03]";
     return;
   }
 
@@ -243,7 +243,7 @@ void Go2HandleServices::handleEuler(
     return;
   } else if (request->yaw < -0.6 || request->yaw > 0.6) {
     response->success = false;
-    response->message = "Yaw value is out of range [-1.5 ~ 1.5]";
+    response->message = "Yaw value is out of range [-0.6 ~ 0.6]";
     return;
   }
 
@@ -266,7 +266,7 @@ void Go2HandleServices::handleFootRaiseHeight(
 {
   (void)request_header;
 
-  if (request->height < 0 || request->height > 0.1) {
+  if (request->height < -0.06 || request->height > 0.03) {
     response->success = false;
     response->message = "Height value is out of range [-0.06 ~ 0.03]";
     return;
@@ -281,6 +281,7 @@ void Go2HandleServices::handleFootRaiseHeight(
 
   request_pub_->publish(req);
   response->success = true;
+  response->message = "Foot raise height changed";
 }
 
 void Go2HandleServices::handleMode(
