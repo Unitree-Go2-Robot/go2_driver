@@ -86,7 +86,9 @@ CallbackReturnT Go2Camera::on_configure()
   RCLCPP_INFO(node_->get_logger(), "\033[1;34mCamera module configured.\033[0m");
 
   // Precompute undistort map for lens correction 
-  cv::initUndistortRectifyMap(k_, d_, cv::Matx33f::eye(), k_, cv::SIZE(width_, height_), CV_32FC1, mapX_, mapY_);
+  cv::Mat K = cv::Mat(3, 3, CV_64F, k_.data());
+  cv::Mat D = cv::Mat(1, 5, CV_64F, d_.data());
+  cv::initUndistortRectifyMap(K, D, cv::Matx33f::eye(), K, cv::Size(width_, height_), CV_32FC1, mapX_, mapY_);
 
   return CallbackReturnT::SUCCESS;
 }
@@ -203,11 +205,11 @@ void Go2Camera::front_video_data_callback(const unitree_go::msg::Go2FrontVideoDa
   cv::Mat bgr;
   cv::cvtColor(yuv420p, bgr, cv::COLOR_YUV420p2RGB);
 
-  cv::Mat dst;
+  // cv::Mat dst;
   // Undistort image using remap to improve performance
-  cv::remap(bgr, dst, mapX_, mapY_, cv::INTER_LINEAR);
+  // cv::remap(bgr, dst, mapX_, mapY_, cv::INTER_LINEAR);
 
-  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", dst).toImageMsg();
+  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", bgr).toImageMsg();
   image_msg->header.stamp = node_->get_clock()->now();
   image_msg->header.frame_id = "camera_frame";
 
