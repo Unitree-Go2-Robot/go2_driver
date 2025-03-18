@@ -86,6 +86,9 @@ private:
   int roi_height_;
   int roi_width_;
   bool roi_do_rectify_;
+
+  // Precompute lens correction interpolation
+  cv::Mat mapX_, mapY_;
 };
 
 }  // namespace go2_driver
