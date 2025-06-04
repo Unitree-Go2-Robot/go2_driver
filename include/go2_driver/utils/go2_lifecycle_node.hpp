@@ -18,6 +18,20 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp>
 
+#define RCLCPP_DISABLE_TOPIC_STATISTICS
+
+#include "unitree_api/msg/response.hpp"
+#include "rosidl_runtime_cpp/traits.hpp"
+
+#include <libstatistics_collector/topic_statistics_collector/received_message_age.hpp>
+
+namespace libstatistics_collector {
+namespace topic_statistics_collector {
+
+template<>
+struct HasHeader<unitree_api::msg::Response> : public std::false_type {};
+}  // namespace topic_statistics_collector
+}  // namespace libstatistics_collector
 
 namespace go2_driver
 {

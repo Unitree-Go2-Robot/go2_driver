@@ -122,29 +122,32 @@ void Go2VUI::handleGetBrightness(
   req.parameter = js.dump();
   req.header.identity.api_id = static_cast<int>(go2_driver::Vui::GetBrightness);
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  rclcpp::CallbackGroup::SharedPtr callback_group = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
-  rclcpp::SubscriptionOptions sub_options;
-  sub_options.callback_group = callback_group;
+  unitree_api::msg::Response::SharedPtr response_msg = nullptr;
+  rclcpp::Node::SharedPtr aux_node = rclcpp::Node::make_shared("aux_node");
 
-  executor.add_callback_group(callback_group, node_->get_node_base_interface());
-
-  unitree_api::msg::Response::SharedPtr response_msg;
-
-  auto response_sub_ = node_->create_subscription<unitree_api::msg::Response>(
+  auto response_sub_ = aux_node->create_subscription<unitree_api::msg::Response>(
     "/api/vui/response", 10,
     [this, &response_msg](const unitree_api::msg::Response::SharedPtr msg) {
       if (msg->header.identity.api_id == static_cast<int>(go2_driver::Vui::GetBrightness)) {
         response_msg = msg;
       }
-    }, sub_options);
+    });
 
   request_pub_->publish(req);
 
+  auto start_time = std::chrono::steady_clock::now();
+  const auto timeout = std::chrono::seconds(5);
+
   while (response_msg == nullptr) {
-    executor.spin_some();
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
+    rclcpp::spin_some(aux_node);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    auto now = std::chrono::steady_clock::now();
+    if (now - start_time > timeout) {
+      response->success = false;
+      response->message = "Timeout waiting for GetBrightness response";
+      return;
+    }
   }
 
   if (response_msg->header.status.code != 0) {
@@ -172,29 +175,32 @@ void Go2VUI::handleGetSwitch(
   req.parameter = js.dump();
   req.header.identity.api_id = static_cast<int>(go2_driver::Vui::GetSwitch);
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  rclcpp::CallbackGroup::SharedPtr callback_group = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
-  rclcpp::SubscriptionOptions sub_options;
-  sub_options.callback_group = callback_group;
+  unitree_api::msg::Response::SharedPtr response_msg = nullptr;
+  rclcpp::Node::SharedPtr aux_node = rclcpp::Node::make_shared("aux_node");
 
-  executor.add_callback_group(callback_group, node_->get_node_base_interface());
-
-  unitree_api::msg::Response::SharedPtr response_msg;
-
-  auto response_sub_ = node_->create_subscription<unitree_api::msg::Response>(
+  auto response_sub_ = aux_node->create_subscription<unitree_api::msg::Response>(
     "/api/vui/response", 10,
     [this, &response_msg](const unitree_api::msg::Response::SharedPtr msg) {
       if (msg->header.identity.api_id == static_cast<int>(go2_driver::Vui::GetSwitch)) {
         response_msg = msg;
       }
-    }, sub_options);
+    });
 
   request_pub_->publish(req);
 
+  auto start_time = std::chrono::steady_clock::now();
+  const auto timeout = std::chrono::seconds(5);
+
   while (response_msg == nullptr) {
-    executor.spin_some();
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
+    rclcpp::spin_some(aux_node);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    auto now = std::chrono::steady_clock::now();
+    if (now - start_time > timeout) {
+      response->success = false;
+      response->message = "Timeout waiting for GetSwitch response";
+      return;
+    }
   }
 
   if (response_msg->header.status.code != 0) {
@@ -222,29 +228,32 @@ void Go2VUI::handleGetVolume(
   req.parameter = js.dump();
   req.header.identity.api_id = static_cast<int>(go2_driver::Vui::GetVolume);
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  rclcpp::CallbackGroup::SharedPtr callback_group = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
-  rclcpp::SubscriptionOptions sub_options;
-  sub_options.callback_group = callback_group;
+  unitree_api::msg::Response::SharedPtr response_msg = nullptr;
+  rclcpp::Node::SharedPtr aux_node = rclcpp::Node::make_shared("aux_node");
 
-  executor.add_callback_group(callback_group, node_->get_node_base_interface());
-
-  unitree_api::msg::Response::SharedPtr response_msg;
-
-  auto response_sub_ = node_->create_subscription<unitree_api::msg::Response>(
+  auto response_sub_ = aux_node->create_subscription<unitree_api::msg::Response>(
     "/api/vui/response", 10,
     [this, &response_msg](const unitree_api::msg::Response::SharedPtr msg) {
       if (msg->header.identity.api_id == static_cast<int>(go2_driver::Vui::GetVolume)) {
         response_msg = msg;
       }
-    }, sub_options);
+    });
 
   request_pub_->publish(req);
 
+  auto start_time = std::chrono::steady_clock::now();
+  const auto timeout = std::chrono::seconds(5);
+
   while (response_msg == nullptr) {
-    executor.spin_some();
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
+    rclcpp::spin_some(aux_node);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    auto now = std::chrono::steady_clock::now();
+    if (now - start_time > timeout) {
+      response->success = false;
+      response->message = "Timeout waiting for GetVolume response";
+      return;
+    }
   }
 
   if (response_msg->header.status.code != 0) {
