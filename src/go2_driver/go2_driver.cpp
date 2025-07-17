@@ -44,7 +44,7 @@ Go2Driver::Go2Driver(
   pointcloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
   joint_state_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos_profile);
-  imu_pub_ = create_publisher<unitree_go::msg::IMUState>("imu", 10);
+  imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("/imu_lowstate", 10);
   request_pub_ = create_publisher<unitree_api::msg::Request>("api/sport/request", 10);
 
   pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -60,7 +60,7 @@ Go2Driver::Go2Driver(
 
   low_state_sub_ = create_subscription<unitree_go::msg::LowState>(
     "lowstate", 10,
-    std::bind(&Go2Driver::publish_joint_states, this, std::placeholders::_1));
+    std::bind(&Go2Driver::low_state_handler, this, std::placeholders::_1));
 
   cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
     "cmd_vel", 10, std::bind(&Go2Driver::cmd_vel_callback, this, std::placeholders::_1));
@@ -173,7 +173,7 @@ void Go2Driver::joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
   joy_state_ = *msg;
 }
 
-void Go2Driver::publish_joint_states(const unitree_go::msg::LowState::SharedPtr msg)
+void Go2Driver::low_state_handler(const unitree_go::msg::LowState::SharedPtr msg)
 {
   sensor_msgs::msg::JointState joint_state;
   joint_state.header.stamp = now();
@@ -188,6 +188,28 @@ void Go2Driver::publish_joint_states(const unitree_go::msg::LowState::SharedPtr 
     msg->motor_state[6].q, msg->motor_state[7].q, msg->motor_state[8].q};
 
   joint_state_pub_->publish(joint_state);
+
+  sensor_msgs::msg::Imu imu_msg;
+  imu_msg.header.stamp = now();
+  imu_msg.header.frame_id = "imu";
+
+  std::array<float, 4> q = msg->imu_state.quaternion;
+  imu_msg.orientation.x = q[1];
+  imu_msg.orientation.y = q[2];
+  imu_msg.orientation.z = q[3];
+  imu_msg.orientation.w = q[0];
+
+  std::array<float, 3> gyro = msg->imu_state.gyroscope;
+  imu_msg.angular_velocity.x = gyro[0];
+  imu_msg.angular_velocity.y = gyro[1];
+  imu_msg.angular_velocity.z = gyro[2];
+
+  std::array<float, 3> accel = msg->imu_state.accelerometer;
+  imu_msg.linear_acceleration.x = accel[0];
+  imu_msg.linear_acceleration.y = accel[1];
+  imu_msg.linear_acceleration.z = accel[2];
+  
+  imu_pub_->publish(imu_msg);
 }
 
 void Go2Driver::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
